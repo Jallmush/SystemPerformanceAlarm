@@ -1,49 +1,36 @@
-def option_1():
-    print("Du valde alternativ 1.")
+from monitor import MonitoringSystem
+from alarm import AlarmManager
 
-def option_2():
-    print("Du valde alternativ 2.")
+def main_menu():
+    system = MonitoringSystem()
+    alarm_manager = AlarmManager()
 
-def option_3():
-    print("Du valde alternativ 3.")
-
-def option_4():
-    print("Du valde alternativ 4.")
-
-def option_5():
-    print("Du valde alternativ 5.")
-
-def exit_menu():
-    print("Avslutar programmet.")
-    exit()
-
-# Meny-funktionen
-def show_menu():
     while True:
-        print("\nHuvudmeny")
-        print("1. Starta övervakningsläge")
+        print("\n--- Huvudmeny ---")
+        print("1. Starta övervakning")
         print("2. Lista aktiv övervakning")
         print("3. Skapa larm")
-        print("4. Radera larm")
-        print("5. Visa larm")
+        print("4. Visa larm")
+        print("5. Radera larm")
         print("6. Avsluta")
 
-        choice = input("Välj ett alternativ (1-6): ")
+        choice = input("Välj ett alternativ: ")
 
         if choice == "1":
-            option_1()
+            system.start_monitoring(alarm_manager)
         elif choice == "2":
-            option_2()
+            system.list_active_monitoring()
         elif choice == "3":
-            option_3()
+            alarm_manager.create_alarm()
         elif choice == "4":
-            option_4()
+            alarm_manager.show_alarms()
         elif choice == "5":
-            option_5()
+            alarm_manager.delete_alarm()
         elif choice == "6":
-            exit_menu()
+            print("Avslutar programmet...")
+            break
         else:
-            print("Ogiltigt val. Försök igen.")
+            print("Felaktigt val, försök igen.")
 
-# Starta menyn
-show_menu()
+if __name__ == "__main__":
+    main_menu()
