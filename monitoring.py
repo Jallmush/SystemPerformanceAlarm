@@ -1,30 +1,58 @@
+import psutil
+import threading
 import time
-from utils import display_warning
+from alarm import alarms
 
-class MonitoringSystem:
-    def __init__(self):
-        self.monitoring_active = False
-        self.cpu_usage = 35
-        self.memory_usage = 65  # In percent
-        self.memory_total = 8  # GB
-        self.disk_usage = 80  # In percent
-        self.disk_total = 500  # GB
+monitoring_active = False
 
-    def start_monitoring(self, alarm_manager):
-        self.monitoring_active = True
-        print("\nÖvervakning startad...")
-        while self.monitoring_active:
-            print("\nÖvervakning är aktiv, tryck på valfri tangent för att återgå till menyn.")
-            time.sleep(5)
-            # Larmhantering
-            alarm_manager.check_alarms(self.cpu_usage, self.memory_usage, self.disk_usage)
-            user_input = input("Tryck på valfri tangent för att avsluta övervakning: ")
-            self.monitoring_active = False
+def start_monitoring():
+    global monitoring_active
+    monitoring_active = True
+    print("\nÖvervakning startad.")
 
-    def list_active_monitoring(self):
-        print("\nStatus för övervakning:")
-        print(f"Övervakning: {'Aktiv' if self.monitoring_active else 'Inaktiv'}")
-        print(f"CPU Användning: {self.cpu_usage}%")
-        print(f"Minnesanvändning: {self.memory_usage}% ({self.memory_usage * self.memory_total / 100:.2f} GB out of {self.memory_total} GB used)")
-        print(f"Diskanvändning: {self.disk_usage}% ({self.disk_usage * self.disk_total / 100:.2f} GB out of {self.disk_total} GB used)")
-        input("\nTryck valfri tangent för att gå tillbaka till huvudmeny.")
+def list_active_monitoring():
+    if not monitoring_active:
+        print("\nIngen övervakning är aktiv.")
+        
+    else:
+        cpu = psutil.cpu_percent(interval=1)
+        memory = psutil.virtual_memory()
+        disk = psutil.disk_usage('/')
+
+        print("\nAktiv övervakning:")
+        print(f"CPU Användning: {cpu}%")
+        print(f"Minnesanvändning: {memory.percent}% ({memory.used / (1024**3):.1f} GB out of {memory.total / (1024**3):.1f} GB used)")
+        print(f"Diskanvändning: {disk.percent}% ({disk.used / (1024**3):.1f} GB out of {disk.total / (1024**3):.1f} GB used)")
+    input("\nTryck valfri tangent för att gå tillbaka till huvudmeny")
+
+def start_monitoring_mode():
+    def monitoring_loop():
+        while monitoring_active:
+            cpu = psutil.cpu_percent(interval=1)
+            memory = psutil.virtual_memory().percent
+            disk = psutil.disk_usage('/').percent
+
+            print(f"\nÖvervakning är aktiv... CPU: {cpu}%, Minne: {memory}%, Disk: {disk}%")
+
+            # Kontrollera om något larm har triggats
+            for alarm in alarms:
+                if alarm.alarm_type == "CPU" and cpu > alarm.threshold:
+                    print(f"***VARNING, LARM AKTIVERAT, CPU ANVÄNDNING ÖVERSTIGER {alarm.threshold}%***")
+                elif alarm.alarm_type == "Minne" and memory > alarm.threshold:
+                    print(f"***VARNING, LARM AKTIVERAT, MINNESANVÄNDNING ÖVERSTIGER {alarm.threshold}%***")
+                elif alarm.alarm_type == "Disk" and disk > alarm.threshold:
+                    print(f"***VARNING, LARM AKTIVERAT, DISKANVÄNDNING ÖVERSTIGER {alarm.threshold}%***")
+
+            time.sleep(2)
+
+    global monitoring_active
+    monitoring_active = True
+    print("\nÖvervakningsläge startat. Tryck på valfri tangent för att återgå till huvudmenyn.")
+
+    monitoring_thread = threading.Thread(target=monitoring_loop)
+    monitoring_thread.daemon = True
+    monitoring_thread.start()
+
+    input()  # Vänta på att användaren trycker på en tangent
+    monitoring_active = False
+    print("\nÅtergår till huvudmenyn...")
