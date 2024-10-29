@@ -1,0 +1,1 @@
+[{"alarm_type": "CPU", "threshold": 10}, {"alarm_type": "Minne", "threshold": 10}, {"alarm_type": "Disk", "threshold": 10}, {"alarm_type": "CPU", "threshold": 15}]
